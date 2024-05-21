@@ -1,3 +1,4 @@
 /.env
 /.venv
 /motion_detection_in_progress.py
+/test_vid.mp4
