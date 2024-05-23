@@ -6,6 +6,7 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 import os
+import subprocess
 import smtplib
 
 from email_alert import send_email_alert
@@ -28,8 +29,24 @@ background_subtractor = cv2.createBackgroundSubtractorMOG2(history = 1000, detec
 
 video_capture = cv2.VideoCapture("http://192.168.86.31:4747/video")
 
-fourcc = cv2.VideoWriter_fourcc(*"XVID")
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 recording = False
+video_writer = None
+
+def add_metadata_to_video(filename, metadata):
+    # Input and output must be different so temporary file is created
+    temp_filename = f"temp_{filename}"
+    cmd = [
+        "ffmpeg",
+        "-i", filename,
+        "-metadata", f"Time={metadata['time']}",
+        "-metadata", f"Comment={metadata['comment']}",
+        "-codec", "copy",
+        temp_filename
+    ]
+    subprocess.run(cmd)
+    # Replace the original file with the new one
+    subprocess.run(['mv', temp_filename, filename])
 
 while video_capture.isOpened():
     # Read a frame from the video
@@ -64,19 +81,19 @@ while video_capture.isOpened():
         if person_detected and not recording:
             recording = True
             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            video_writer = cv2.VideoWriter(f"my_clips/{now}.avi", fourcc, 20.0, (frame.shape[1], frame.shape[0]))
+            filename = f"static/{now}.mp4"
+            video_writer = cv2.VideoWriter(filename, fourcc, 20.0, (frame.shape[1], frame.shape[0]))
             print("Recording started")
 
         elif not person_detected and recording:
             recording = False
             video_writer.release()
+            video_writer = None
+            add_metadata_to_video(filename, {"time": now, "comment": "test"})
             print("Recording stopped")
 
         if recording:
             video_writer.write(frame)
-        
-    
-        
         
     cv2.imshow("Press \"q\" to quit", frame)
 
