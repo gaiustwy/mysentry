@@ -38,7 +38,7 @@ def add_metadata_to_video(file_path, metadata):
 
     comment = format_object_detected(metadata["comment"])
     cmd = [
-        "ffmpeg.exe",
+        "ffmpeg",
         "-i", file_path,
         "-metadata", f"comment={comment}",
         "-codec", "copy",
@@ -95,7 +95,7 @@ while video_capture.isOpened():
             video_writer = None
             print(labels)
 
-            
+
 
             # Add comment about object detected to metadata of the video
             # add_metadata_to_video(filename, {"comment": labels})
