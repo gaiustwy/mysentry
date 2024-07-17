@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block body %}
+	<!-- Cards -->
+	<div class="py-5 bg-body-tertiary">
+		<div class="container">
+			<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+				{% for clip, timestamp, comment in clips %}
+				<div class="col">
+					<div class="card shadow-sm">
+						<video controls>
+							<source src="{{ url_for('static', filename=clip)}}" type="video/mp4">
+						</video>
+						<div class="card-body">
+							<p class="card-text">{{ comment }}</p>
+							<div class="d-flex justify-content-between align-items-center">
+								<div class="btn-group">
+									<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">Delete</a>
+								</div>
+								<small class="text-body-secondary">{{ timestamp }}</small>
+							</div>
+						</div>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+{% endblock %}

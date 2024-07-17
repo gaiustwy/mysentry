@@ -1,53 +1,16 @@
 {% extends 'base.html' %}
-{% block head %}
-	<title>Dashboard</title>
-{% endblock %}
 {% block body %}
-	<!-- Navigation bar -->
-	<div class="navbar navbar-dark bg-dark shadow-sm">
-		<div class="container">
-			<div class="navbar-brand d-flex align-items-center">
-				<strong>Dashboard</strong>
-			</div>
-		</div>
-  	</div>
-	<!-- Banner -->
+	<!-- Camera Feed -->
 	<section class="py-5 text-center container">
 		<div class="row py-lg-5">
 		  	<div class="col-lg-6 col-md-8 mx-auto">
-				<h1 class="fw-light">Live Feed</h1>
-				<p class="lead text-body-secondary">[LIVE FEED HERE]</p>
+				<h1 class="fw-light">Camera Feed</h1>
+				<img src="{{ url_for('video_feed') }}" />
 				<p>
-			  		<a href="#" class="btn btn-primary my-2">Start Live Feed</a>
-			  		<a href="#" class="btn btn-secondary my-2">End Live Feed</a>
+			  		<!-- <a href="#" class="btn btn-primary my-2">Start Live Feed</a>
+			  		<a href="#" class="btn btn-secondary my-2">End Live Feed</a> -->
 				</p>
 		  </div>
 		</div>
 	</section>
-	<!-- Card -->
-	<div class="py-5 bg-body-tertiary">
-		<div class="container">
-			<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-				{% for clip in clips %}
-				<div class="col">
-					<div class="card shadow-sm">
-						<video controls>
-							<source src="{{ url_for('static', filename=clip)}}" type="video/mp4">
-						</video>
-						<div class="card-body">
-							<p class="card-text">This is a clip named {{ clip }}.</p>
-							<div class="d-flex justify-content-between align-items-center">
-								<div class="btn-group">
-									<button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-									<button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-								</div>
-								<small class="text-body-secondary">Detected: {{ clip }}</small>
-							</div>
-						</div>
-					</div>
-				</div>
-				{% endfor %}
-			</div>
-		</div>
-	</div>
 {% endblock %}
