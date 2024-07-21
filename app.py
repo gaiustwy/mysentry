@@ -1,20 +1,52 @@
-from flask import Flask, render_template, redirect, url_for, Response
+from flask import Flask, render_template, request, redirect, url_for, Response
 import os
 from datetime import datetime
+import cv2
 from motion_detection import generate_frames
 import subprocess
 
 app = Flask(__name__)
+video_capture = None
+motion_detection_active = False
+camera_url = None
 
 @app.route('/')
 def index():
-	static_folder = os.path.join(app.root_path, 'static')
-	clips = [f for f in os.listdir(static_folder) if f.endswith('.mp4')]
-	return render_template('index.html', clips = clips)
+    camera_started = video_capture is not None and video_capture.isOpened()
+    return render_template('index.html', camera_started=camera_started)
+
+@app.route('/start_camera', methods=['POST'])
+def start_camera():
+    global video_capture, camera_url
+    new_camera_url = request.form['camera_url']
+
+    if new_camera_url.isdigit():
+        new_camera_url = int(new_camera_url)
+    
+    if camera_url != new_camera_url:
+        # Close the existing camera if it is open
+        if video_capture and video_capture.isOpened():
+            video_capture.release()
+        
+        # Update the camera URL and start the new camera
+        camera_url = new_camera_url
+        video_capture = cv2.VideoCapture(camera_url)
+    
+    return redirect(url_for('index'))
+
+@app.route('/start_motion_detection', methods=['POST'])
+def start_motion_detection():
+    global motion_detection_active
+    motion_detection_active = True
+    return redirect(url_for('index'))
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if video_capture and video_capture.isOpened():
+        return Response(generate_frames(video_capture, motion_detection_active), mimetype='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return "Camera not started", 400
+
 
 @app.route('/delete/<clip_name>')
 def delete_clip(clip_name):

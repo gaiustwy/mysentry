@@ -1,7 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from collections import Counter
-from datetime import datetime
 import os
 import smtplib
 
@@ -54,7 +54,7 @@ def send_first_email_alert(server, email_address):
     message.attach(MIMEText(message_body, "plain"))
     server.sendmail(email_address, email_address, message.as_string())
 
-def send_second_email_alert(server, email_address, labels, current_time):
+def send_second_email_alert(server, email_address, labels, current_time, frame_path):
     """Sends an email notification indicating the number of objects detected; defaults to 1 object."""
     message = MIMEMultipart()
     
@@ -75,6 +75,7 @@ def send_second_email_alert(server, email_address, labels, current_time):
 
     Objects detected at {current_time}:
     {object_details}
+    (See attached image)
 
     Please visit the dashboard to view the recorded clip.
 
@@ -83,5 +84,11 @@ def send_second_email_alert(server, email_address, labels, current_time):
     """
 
     message.attach(MIMEText(message_body, "plain"))
+
+    with open(frame_path, "rb") as attachment:
+        img = MIMEImage(attachment.read())
+        img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(frame_path))
+        message.attach(img)
+
     server.sendmail(email_address, email_address, message.as_string())
     print("Sent email alert")

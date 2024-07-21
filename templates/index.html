@@ -5,11 +5,30 @@
 		<div class="row py-lg-5">
 		  	<div class="col-lg-6 col-md-8 mx-auto">
 				<h1 class="fw-light">Camera Feed</h1>
-				<img src="{{ url_for('video_feed') }}" />
-				<p>
-			  		<!-- <a href="#" class="btn btn-primary my-2">Start Live Feed</a>
-			  		<a href="#" class="btn btn-secondary my-2">End Live Feed</a> -->
-				</p>
+				{% if camera_started %}
+                	<img src="{{ url_for('video_feed') }}" />
+            	{% else %}
+                	<p>Camera is not connected yet. Please enter the IP address of the camera below.</p>
+           		 {% endif %}
+				<!-- Buttons to control the camera and motion detection -->
+				<div class="container pt-3">
+					<form action="{{ url_for('start_camera') }}" method="post" class="row g-2">
+						<div class="col-auto">
+							<label for="camera_url" class="col-form-label">URL</label>
+						</div>
+						<div class="col">
+							<input type="text" class="form-control" id="camera_url" name="camera_url" required>
+						</div>
+						<div class="col-auto">
+							<button type="submit" class="btn btn-outline-primary">Connect</button>
+						</div>
+					</form>
+					{% if camera_started %}
+					<form action="{{ url_for('start_motion_detection') }}" method="post" class="mt-3">
+						<button type="submit" class="btn btn-outline-primary">Start Motion Detection</button>
+					</form>
+					{% endif %}
+				</div>
 		  </div>
 		</div>
 	</section>
