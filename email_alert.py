@@ -27,11 +27,6 @@ def initialize_email_server():
 
     return server, email_address
 
-    # This is an automated alert to inform you that motion has been detected.
-
-    # You will receive another email with the further details of the objects detected once the clip is processed. 
-
-
 def send_first_email_alert(server, email_address):
     """Sends an email notification indicating that motion has been detected."""
     message = MIMEMultipart()
@@ -43,9 +38,9 @@ def send_first_email_alert(server, email_address):
     message_body = """
     Hello Sir/Mdm,
 
-    1 person has been detected in the video feed.
+    This is an automated alert to inform you that motion has been detected.
 
-    Please visit the dashboard to view the recorded clip.
+    You will receive another email with the further details of the objects detected once the clip is processed. 
 
     Thank you,
     MySentry

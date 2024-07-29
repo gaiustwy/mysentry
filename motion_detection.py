@@ -2,6 +2,7 @@ import cv2
 import torch
 from ultralytics import YOLO
 from datetime import datetime, timedelta
+import numpy as np
 
 import os
 import subprocess
@@ -15,7 +16,7 @@ server, email_address = initialize_email_server()
 model = YOLO("yolov8n.pt")
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-background_subtractor = cv2.createBackgroundSubtractorMOG2(history=5000, varThreshold=24, detectShadows=False)
+background_subtractor = cv2.createBackgroundSubtractorMOG2(history=1000, varThreshold=24, detectShadows=False)
 
 # video_capture = cv2.VideoCapture("http://192.168.86.31:4747/video")
 
@@ -25,26 +26,24 @@ video_writer = None
 filename = None
 
 
-def get_frame_from_clip(video_path):
+def get_frame_from_clip(video_path, frame_number):
     cap = cv2.VideoCapture(video_path)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    middle_frame_number = total_frames // 2
-
-    cap.set(cv2.CAP_PROP_POS_FRAMES, middle_frame_number)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
     _, frame = cap.read()
     cap.release()
 
     return frame
 
+
 def detect_objects_in_frame(frame):
     objects_detected = []
-    results = model.predict(frame, save=True, )
+
+    results = model.predict(frame, save=True)
     for result in results:
         for box in result.boxes:
             class_id = int(box.data[0][-1])
             objects_detected.append(str(model.names[class_id]))
 
-    print(objects_detected)
     return objects_detected
 
 def add_metadata_to_video(file_path, metadata):
@@ -70,15 +69,13 @@ def generate_frames(video_capture, motion_detection_active):
     global recording, video_writer, filename
 
     frame_count = 0
-    warm_up_frames = 240
     recording = False
     max_recording_duration = 20 # seconds
     recording_start_time = None
-    frame_count_start = None
-    fps = 20.0
-    
-    no_motion_frames = 0
-    max_no_motion_frames = fps * 2 # Stop recording if no motion for 2 seconds
+    fps = 24.0
+    no_motion_frame_count = 0  # Counter for consecutive frames without motion
+    no_motion_threshold = 60  # Threshold for stopping the recording (e.g., 30 frames)
+    motion_detected_frames = []
 
     while video_capture.isOpened():
         # Read a frame from the video
@@ -86,11 +83,15 @@ def generate_frames(video_capture, motion_detection_active):
 
         if not success:
             break
-        
-        frame_count += 1
 
-        # Prevents instant motion detection when the camera is first turned on
-        if motion_detection_active and frame_count > warm_up_frames:
+        # Calculate the area of the frame
+        frame_height, frame_width = frame.shape[:2]
+        frame_area = frame_width * frame_height
+
+        min_area = frame_area * 0.05
+        max_area = frame_area * 0.7
+
+        if motion_detection_active:
             fg_mask = background_subtractor.apply(frame)
 
             _, thresh = cv2.threshold(fg_mask, 0, 255, cv2.THRESH_BINARY)
@@ -109,40 +110,58 @@ def generate_frames(video_capture, motion_detection_active):
                 x, y, w, h = cv2.boundingRect(contour)
                 area = cv2.contourArea(contour)
 
-                if area > 30000:
+                if min_area < area < max_area:
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     print("Motion detected")
                     motion_detected = True
-                    no_motion_frames = 0
+                    # Reset the counter whenever motion is detected
+                    no_motion_frame_count = 0 
 
                     if not recording:
                         recording = True
-                        frame_count_start = frame_count
                         recording_start_time = datetime.now()
                         filename = f"static/{recording_start_time.strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
                         video_writer = cv2.VideoWriter(filename, fourcc, fps, (frame.shape[1], frame.shape[0]))
+                        video_writer_temp = cv2.VideoWriter("static/temp_video.mp4", fourcc, fps, (frame.shape[1], frame.shape[0]))
                         print("Recording started")
-            
-            # if not motion_detected:
-            #     no_motion_frames += 1
 
             if recording:
                 video_writer.write(frame)
-                if motion_detected == False or (frame_count - frame_count_start) >= (fps * max_recording_duration):
+
+                motion_mask = np.zeros_like(fg_mask)
+                cv2.rectangle(motion_mask, (x, y), (x + w, y + h), (255, 255, 255), -1)
+                masked_frame = cv2.bitwise_and(frame, frame, mask=motion_mask)
+                video_writer_temp.write(masked_frame)
+                frame_count += 1
+                
+                if not motion_detected:
+                    no_motion_frame_count += 1
+                else:
+                    no_motion_frame_count = 0
+                    motion_detected_frames.append(frame_count)
+
+                if no_motion_frame_count >= no_motion_threshold or frame_count >= (fps * max_recording_duration):
                     recording = False
                     video_writer.release()
+                    video_writer_temp.release()
+                    frame_count = 0
                     print("Stopped recording")
 
-                    # Perform object detection on the middle frame
-                    frame = get_frame_from_clip(filename)
-                    frame_path = f"static/preview.jpg"
-                    cv2.imwrite(frame_path, frame)
-                    objects_detected = detect_objects_in_frame(frame)
+                    index = len(motion_detected_frames) // 2
+                    middle_frame_number = motion_detected_frames[index]
+
+                    frame = get_frame_from_clip(filename, middle_frame_number)
+                    cv2.imwrite("static/preview.jpg", frame)
+
+                    masked_frame = get_frame_from_clip("static/temp_video.mp4", middle_frame_number)
+                    cv2.imwrite("static/preview_masked.jpg", masked_frame) # DELETE THIS LINE
+
+                    objects_detected = detect_objects_in_frame(masked_frame)
                     add_metadata_to_video(filename, objects_detected)
 
                     # Send second email alert
-                    # send_second_email_alert(server, email_address, objects_detected,
-                    #                         recording_start_time.strftime("%I:%M:%S %p %d %B %Y"), frame_path)
+                    send_second_email_alert(server, email_address, objects_detected,
+                                            recording_start_time.strftime("%I:%M:%S %p %d %B %Y"), "static/preview.jpg")
 
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()

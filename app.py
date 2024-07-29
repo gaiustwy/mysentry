@@ -31,7 +31,6 @@ def start_camera():
         # Update the camera URL and start the new camera
         camera_url = new_camera_url
         video_capture = cv2.VideoCapture(camera_url)
-    
     return redirect(url_for('index'))
 
 @app.route('/start_motion_detection', methods=['POST'])
@@ -58,7 +57,7 @@ def delete_clip(clip_name):
 @app.route('/clips')
 def clips():
     static_folder = os.path.join(app.root_path, 'static')
-    clips = [f for f in os.listdir(static_folder) if f.endswith('.mp4')]
+    clips = [f for f in os.listdir(static_folder) if f.endswith('.mp4') and f != 'temp_video.mp4']
 
     # Get the full path for each clip
     clips_full_path = [os.path.join(static_folder, f) for f in clips]
