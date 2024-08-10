@@ -1,19 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, Response
+from flask import Flask, render_template, request, redirect, jsonify, url_for, Response
 import os
 from datetime import datetime
 import cv2
 from motion_detection import generate_frames
 import subprocess
+import config
 
 app = Flask(__name__)
 video_capture = None
-motion_detection_active = False
 camera_url = None
 
 @app.route('/')
 def index():
     camera_started = video_capture is not None and video_capture.isOpened()
-    return render_template('index.html', camera_started=camera_started)
+    return render_template('index.html', camera_started=camera_started, motion_detection_active=config.motion_detection_active)
 
 @app.route('/start_camera', methods=['POST'])
 def start_camera():
@@ -33,25 +33,50 @@ def start_camera():
         video_capture = cv2.VideoCapture(camera_url)
     return redirect(url_for('index'))
 
-@app.route('/start_motion_detection', methods=['POST'])
-def start_motion_detection():
-    global motion_detection_active
-    motion_detection_active = True
-    return redirect(url_for('index'))
+@app.route('/toggle_motion_detection', methods=['POST'])
+def toggle_motion_detection():
+    if config.motion_detection_active:
+        config.motion_detection_active = False
+    else:
+        config.motion_detection_active = True
+
+    return jsonify({"motion_detection_active": config.motion_detection_active}), 200
+
+@app.route('/set_exclusion_zones', methods=['POST'])
+def set_exclusion_zones():
+    config.exclusion_zones = request.json.get('zones')
+    return '', 204
+
+@app.route('/clear_exclusion_zones', methods=['POST'])
+def clear_exclusion_zones():
+    config.exclusion_zones = []
+    return '', 204
 
 @app.route('/video_feed')
 def video_feed():
     if video_capture and video_capture.isOpened():
-        return Response(generate_frames(video_capture, motion_detection_active), mimetype='multipart/x-mixed-replace; boundary=frame')
+        return Response(generate_frames(video_capture), 
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     else:
         return "Camera not started", 400
-
 
 @app.route('/delete/<clip_name>')
 def delete_clip(clip_name):
     clip_path = os.path.join(app.root_path, 'static', clip_name)
     if os.path.exists(clip_path):
         os.remove(clip_path)
+    return redirect(url_for('clips'))
+
+@app.route('/delete_all_clips', methods=['POST'])
+def delete_all_clips():
+    static_folder = os.path.join(app.root_path, 'static')
+    clips = [f for f in os.listdir(static_folder) if f.endswith('.mp4') and f != 'temp_video.mp4']
+
+    for clip in clips:
+        clip_path = os.path.join(static_folder, clip)
+        if os.path.exists(clip_path):
+            os.remove(clip_path)
+
     return redirect(url_for('clips'))
 
 @app.route('/clips')

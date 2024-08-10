@@ -49,7 +49,7 @@ def send_first_email_alert(server, email_address):
     message.attach(MIMEText(message_body, "plain"))
     server.sendmail(email_address, email_address, message.as_string())
 
-def send_second_email_alert(server, email_address, labels, current_time, frame_path):
+def send_second_email_alert(server, email_address, labels, current_time, preview_image_path, prediction_image_path):
     """Sends an email notification indicating the number of objects detected; defaults to 1 object."""
     message = MIMEMultipart()
     
@@ -70,7 +70,8 @@ def send_second_email_alert(server, email_address, labels, current_time, frame_p
 
     Objects detected at {current_time}:
     {object_details}
-    (See attached image)
+    
+    See the attached images for more details.
 
     Please visit the dashboard to view the recorded clip.
 
@@ -80,10 +81,18 @@ def send_second_email_alert(server, email_address, labels, current_time, frame_p
 
     message.attach(MIMEText(message_body, "plain"))
 
-    with open(frame_path, "rb") as attachment:
+    with open(preview_image_path, "rb") as attachment:
         img = MIMEImage(attachment.read())
-        img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(frame_path))
+        img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(preview_image_path))
         message.attach(img)
+
+    # Attach the additional image if provided
+    if prediction_image_path:
+        with open(prediction_image_path, "rb") as attachment:
+            additional_img = MIMEImage(attachment.read())
+            additional_img.add_header('Content-Disposition', 'attachment', filename=os.path.basename(prediction_image_path))
+            message.attach(additional_img)
+
 
     server.sendmail(email_address, email_address, message.as_string())
     print("Sent email alert")

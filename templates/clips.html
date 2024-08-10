@@ -1,28 +1,49 @@
 {% extends 'base.html' %}
 {% block body %}
-	<!-- Cards -->
-	<div class="py-5 bg-body-tertiary">
-		<div class="container">
-			<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-				{% for clip, timestamp, comment in clips %}
-				<div class="col">
-					<div class="card shadow-sm">
-						<video controls>
-							<source src="{{ url_for('static', filename=clip)}}" type="video/mp4">
-						</video>
-						<div class="card-body">
-							<p class="card-text">{{ comment }}</p>
-							<div class="d-flex justify-content-between align-items-center">
-								<div class="btn-group">
-									<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">Delete</a>
-								</div>
-								<small class="text-body-secondary">{{ timestamp }}</small>
-							</div>
-						</div>
-					</div>
-				</div>
-				{% endfor %}
+	<!-- Title Board -->
+	<div class="container-fluid py-5 text-center title-board">
+		<div class="row py-lg-5">
+		  	<div class="col-lg-6 col-md-8 mx-auto">
+				<h1 class="text-black"><i class="bi bi-play-btn"></i>&nbspClips</h1>
 			</div>
 		</div>
 	</div>
+	<div class="container pt-5 text-end">
+		<form action="{{ url_for('delete_all_clips') }}" method="post" id="deleteAllForm">
+            <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteAll()">
+				<i class="bi bi-trash"></i>&nbspDelete All Clips</button>
+        </form>
+	</div>
+	<!-- Cards -->
+	<div class="container pt-3 pb-5">
+		<div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+			{% for clip, timestamp, comment in clips %}
+			<div class="col">
+				<div class="card shadow">
+					<video controls>
+						<source src="{{ url_for('static', filename=clip)}}" type="video/mp4">
+					</video>
+					<div class="card-body">
+						<p class="card-text">{{ comment }}</p>
+						<div class="d-flex justify-content-between align-items-center">
+							<!-- <div class="btn-group"> -->
+								<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">
+									<i class="bi bi-trash"></i>&nbspDelete
+								</a>
+							<!-- </div> -->
+							<small>{{ timestamp }}</small>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+	<script>
+		function confirmDeleteAll() {
+			if (confirm("Are you sure you want to delete all clips? This action cannot be undone.")) {
+				document.getElementById("deleteAllForm").submit();
+			}
+		}
+	</script>
 {% endblock %}

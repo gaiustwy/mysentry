@@ -1,7 +1,7 @@
 import cv2
 import torch
 from ultralytics import YOLO
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
 
 import os
@@ -9,6 +9,7 @@ import subprocess
 
 from email_alert import *
 from app import *
+import config
 
 # Initialize the email server
 server, email_address = initialize_email_server()
@@ -25,7 +26,6 @@ recording = False
 video_writer = None
 filename = None
 
-
 def get_frame_from_clip(video_path, frame_number):
     cap = cv2.VideoCapture(video_path)
     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
@@ -34,15 +34,15 @@ def get_frame_from_clip(video_path, frame_number):
 
     return frame
 
-
 def detect_objects_in_frame(frame):
     objects_detected = []
 
-    results = model.predict(frame, save=True)
+    results = model.predict(frame)
     for result in results:
         for box in result.boxes:
             class_id = int(box.data[0][-1])
             objects_detected.append(str(model.names[class_id]))
+        result.save(filename="static/prediction_image.jpg")
 
     return objects_detected
 
@@ -64,8 +64,20 @@ def add_metadata_to_video(file_path, metadata):
     subprocess.run(cmd)
     # Replace the original file with the new one
     os.replace(temp_filename, file_path)
+
+def is_in_exclusion_zone(contour_x, contour_y, exclusion_zones):
+    for zone in exclusion_zones:
+        # Normalize the coordinates
+        zone_start_x = min(zone['startX'], zone['endX'])
+        zone_end_x = max(zone['startX'], zone['endX'])
+        zone_start_y = min(zone['startY'], zone['endY'])
+        zone_end_y = max(zone['startY'], zone['endY'])
+
+        if (zone_start_x <= contour_x <= zone_end_x and zone_start_y <= contour_y <= zone_end_y):
+            return True
+    return False
     
-def generate_frames(video_capture, motion_detection_active):
+def generate_frames(video_capture):
     global recording, video_writer, filename
 
     frame_count = 0
@@ -89,9 +101,9 @@ def generate_frames(video_capture, motion_detection_active):
         frame_area = frame_width * frame_height
 
         min_area = frame_area * 0.05
-        max_area = frame_area * 0.7
+        max_area = frame_area * 0.9
 
-        if motion_detection_active:
+        if config.motion_detection_active:
             fg_mask = background_subtractor.apply(frame)
 
             _, thresh = cv2.threshold(fg_mask, 0, 255, cv2.THRESH_BINARY)
@@ -108,9 +120,9 @@ def generate_frames(video_capture, motion_detection_active):
 
             for contour in contours:
                 x, y, w, h = cv2.boundingRect(contour)
-                area = cv2.contourArea(contour)
+                object_area = cv2.contourArea(contour)
 
-                if min_area < area < max_area:
+                if min_area < object_area < max_area and not is_in_exclusion_zone(x, y, config.exclusion_zones):
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                     print("Motion detected")
                     motion_detected = True
@@ -159,9 +171,9 @@ def generate_frames(video_capture, motion_detection_active):
                     objects_detected = detect_objects_in_frame(masked_frame)
                     add_metadata_to_video(filename, objects_detected)
 
-                    # Send second email alert
-                    send_second_email_alert(server, email_address, objects_detected,
-                                            recording_start_time.strftime("%I:%M:%S %p %d %B %Y"), "static/preview.jpg")
+                    # # Send second email alert
+                    # send_second_email_alert(server, email_address, objects_detected,
+                    #                         recording_start_time.strftime("%I:%M:%S %p %d %B %Y"), "static/preview.jpg", "static/prediction_image.jpg")
 
         _, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
@@ -171,106 +183,3 @@ def generate_frames(video_capture, motion_detection_active):
     video_capture.release()
     if video_writer is not None:
         video_writer.release()
-
-
-
-
-
-    #     results = model(frame, device = device, stream = True)
-
-    #     labels = []
-
-    #     for result in results:
-    #         annotator = Annotator(frame, 3, result.names)
-    #         boxes = result.boxes.xyxy.cpu().tolist()
-    #         clss = result.boxes.cls.cpu().tolist()
-    #         names = result.names
-
-    #         person_detected = False
-
-    #         for box, cls in zip(boxes, clss):
-    #             cls_index = int(cls)
-    #             # Get the label of the class
-    #             label = names[cls_index] 
-    #             labels.append(label) # List of labels e.g. ["person", "cat"]
-    #             annotator.box_label(box, label=label, color=colors(cls_index, True))
-        
-    #             # If person is detected
-    #             if (cls_index == 0):
-    #                 person_detected = True
-            
-    #         if person_detected and not recording:
-    #             recording = True
-    #             # Send first email alert
-    #             send_first_email_alert(server, email_address)
-    #             now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") # "%d %B %Y %I:%M:%S %p"
-    #             filename = f"static/{now}.mp4"
-    #             video_writer = cv2.VideoWriter(filename, fourcc, 20.0, (frame.shape[1], frame.shape[0]))
-    #             print("Recording started")
-                
-
-    #         elif not person_detected and recording:
-    #             recording = False
-    #             video_writer.release()
-    #             video_writer = None
-    #             print(labels)
-
-
-
-    #             # Add comment about object detected to metadata of the video
-    #             # add_metadata_to_video(filename, {"comment": labels})
-
-    #             # # Send second email alert
-    #             # send_second_email_alert(server, email_address, email_address, labels)
-    #             print("Recording stopped")
-
-    #         if recording:
-    #             video_writer.write(frame)
-            
-    #     _, buffer = cv2.imencode('.jpg', frame)
-    #     frame = buffer.tobytes()
-    #     yield (b'--frame\r\n'
-    #            b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-    # if video_writer:
-    #     video_writer.release()
-    # video_capture.release()
-    # cv2.destroyAllWindows()
-    # server.quit()
-
-
-
-
-# while video_capture.isOpened():
-#     # Read a frame from the video
-#     success, frame = video_capture.read()
-
-#     if success:
-
-#         fg_mask = background_subtractor.apply(frame)
-
-#         _, thresh = cv2.threshold(fg_mask, 0, 255, cv2.THRESH_BINARY)
-
-#         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10))
-
-#         fg_mask = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-
-#         fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_CLOSE, kernel)
-
-#         contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-#         for contour in contours:
-#             x, y, w, h = cv2.boundingRect(contour)
-
-#             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
-#         cv2.imshow("Press \"q\" to quit", frame)
-
-#         # results = model(frame, device = device, stream = True)
-        
-#         if cv2.waitKey(1) & 0xFF == ord("q"):
-#             break
-
-#     else:
-#         # Break the loop if the end of the video is reached
-#         break

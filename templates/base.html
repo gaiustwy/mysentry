@@ -5,20 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
 		rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
 	<title>MySentry Dashboard</title>
+	<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
 </head>
 <body>
 	<!-- Navigation bar -->
-	<nav class="navbar navbar-expand-lg navbar navbar-dark bg-dark">
-		<div class="container-fluid">
-			<a class="navbar-brand" href="{{ url_for('index') }}"><strong>MySentry</strong></a>
+	<nav class="navbar navbar-expand-lg navbar navbar-dark shadow">
+		<div class="container">
+			<a class="navbar-brand" href="{{ url_for('index') }}"><i class="bi bi-camera"></i>&nbsp<strong>MySentry</strong></a>
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav">
 					<li class="nav-item">
-						<a class="nav-link active" href="{{ url_for('clips') }}"><strong>Clips</strong></a>
+						<a class="nav-link active" href="{{ url_for('clips') }}"><i class="bi bi-play-btn"></i>&nbsp<strong>Clips</strong></a>
 					</li>
 					<!-- <li class="nav-item">
 						<a class="nav-link active" href="#"><strong>Settings</strong></a>
@@ -30,6 +32,16 @@
 	{% block body %}
 	{% endblock %}
 </body>
+<footer class="py-3 mt-auto">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-0 text-white">2024 MySentry. CM3070 Final Project.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
 <!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" 
 	integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
