@@ -11,7 +11,8 @@
 	<div class="container pt-5 text-end">
 		<form action="{{ url_for('delete_all_clips') }}" method="post" id="deleteAllForm">
             <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteAll()">
-				<i class="bi bi-trash"></i>&nbspDelete All Clips</button>
+				<i class="bi bi-trash"></i>&nbspDelete All Clips
+			</button>
         </form>
 	</div>
 	<!-- Cards -->
@@ -21,16 +22,14 @@
 			<div class="col">
 				<div class="card shadow">
 					<video controls>
-						<source src="{{ url_for('static', filename=clip)}}" type="video/mp4">
+						<source src="{{ url_for('static', filename='clips/' ~ clip)}}" type="video/mp4">
 					</video>
 					<div class="card-body">
 						<p class="card-text">{{ comment }}</p>
 						<div class="d-flex justify-content-between align-items-center">
-							<!-- <div class="btn-group"> -->
-								<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">
-									<i class="bi bi-trash"></i>&nbspDelete
-								</a>
-							<!-- </div> -->
+							<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">
+								<i class="bi bi-trash"></i>&nbspDelete
+							</a>
 							<small>{{ timestamp }}</small>
 						</div>
 					</div>

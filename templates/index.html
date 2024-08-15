@@ -12,15 +12,16 @@
 	<div class="container py-5">
 		<div class="col-lg-8 mx-auto text-center">
 			{% if camera_started %}
-				<div class="position-relative">
+				<div class="position-relative pb-4">
 					<img id="frame" class="w-100 rounded" src="{{ url_for('video_feed') }}"/>
 					<canvas id="videoCanvas" class="w-100 rounded position-absolute top-0 start-0 border border-dark shadow"></canvas>
 				</div>
-                <div class="d-flex justify-content-evenly pt-4 pb-2">
+				<p>Draw on the video feed to create exclusion zones. These areas will be ignored by the motion detection.</p>
+                <div class="d-flex justify-content-evenly pt-1 pb-2">
                     <button id="toggleMotionButton" class="btn btn-outline-primary">
 						<i class="bi bi-play-circle"></i>&nbspStart Motion Detection
                     </button>
-					<button id="clearButton" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i>&nbspClear Zones</button>
+					<button id="clearButton" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i>&nbspClear All Exclusion Zones</button>
                 </div>
 				<hr class="border-2 border-dark">
 				<p>Enter a different IP address to switch cameras.</p>
@@ -40,97 +41,5 @@
 			</div>			
 		</div>
 	</div>
-	<script>
-		let canvas = document.getElementById('videoCanvas');
-		if (canvas) {
-			let ctx = canvas.getContext('2d');
-			let frame = document.getElementById('frame');
-			let startX, startY, endX, endY;
-			let drawing = false;
-			let exclusionZones = [];
-
-			function setCanvasSize() {
-				canvas.width = frame.clientWidth;
-				canvas.height = frame.clientHeight;
-			}
-
-			// Set canvas size on load and resize
-			frame.onload = setCanvasSize;
-
-			function getMousePos(canvas, evt) {
-				let rect = canvas.getBoundingClientRect();
-				return {
-					x: evt.clientX - rect.left,
-					y: evt.clientY - rect.top
-				};
-			}
-
-			canvas.addEventListener('mousedown', (e) => {
-				let pos = getMousePos(canvas, e);
-				startX = pos.x;
-				startY = pos.y;
-				drawing = true;
-			});
-
-			canvas.addEventListener('mousemove', (e) => {
-				if (!drawing) return;
-				let pos = getMousePos(canvas, e);
-				endX = pos.x;
-				endY = pos.y;
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
-				ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
-				ctx.fillRect(startX, startY, endX - startX, endY - startY);
-				exclusionZones.forEach(zone => {
-					ctx.fillRect(zone.startX, zone.startY, zone.endX - zone.startX, zone.endY - zone.startY);
-				});
-			});
-
-			canvas.addEventListener('mouseup', () => {
-				drawing = false;
-				exclusionZones.push({ startX, startY, endX, endY });
-				exclusionZones.forEach(zone => {
-					ctx.fillRect(zone.startX, zone.startY, zone.endX - zone.startX, zone.endY - zone.startY);
-				});
-				// Send exclusion zones to the server
-				fetch('/set_exclusion_zones', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ zones: exclusionZones })
-				});
-			});
-
-			// Clear all drawings
-            document.getElementById('clearButton').addEventListener('click', () => {
-                exclusionZones = [];
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                fetch('/clear_exclusion_zones', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-            });
-
-			// Toggle motion detection without reloading
-			document.getElementById('toggleMotionButton').addEventListener('click', () => {
-			fetch('/toggle_motion_detection', {
-				method: 'POST'
-			}).then(response => response.json())
-				.then(data => {
-					let button = document.getElementById('toggleMotionButton');
-					if (data.motion_detection_active) {
-						button.innerHTML = '<i class="bi bi-stop-circle"></i>&nbspStop Motion Detection';
-						button.classList.remove('btn-outline-primary');
-						button.classList.add('btn-outline-danger');
-					} else {
-						button.innerHTML = '<i class="bi bi-play-circle"></i>&nbspStart Motion Detection';
-						button.classList.remove('btn-outline-danger');
-						button.classList.add('btn-outline-primary');
-					}
-				});
-            });
-		}
-	</script>
+	<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}
