@@ -1,5 +1,5 @@
 /.env
 /.venv
-/motion_detection_in_progress.py
-/test_vid.mp4
-/static
+/static/clips
+/static/temp
+/__pycache__

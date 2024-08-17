@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
 	<!-- Title Board -->
+    <!-- This section displays the title 'Clips' with a play button icon. -->
 	<div class="container-fluid py-5 text-center title-board">
 		<div class="row py-lg-5">
 		  	<div class="col-lg-6 col-md-8 mx-auto">
@@ -8,6 +9,8 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Delete All Clips Button -->
 	<div class="container pt-5 text-end">
 		<form action="{{ url_for('delete_all_clips') }}" method="post" id="deleteAllForm">
             <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteAll()">
@@ -15,17 +18,26 @@
 			</button>
         </form>
 	</div>
-	<!-- Cards -->
+	
+
+	<!-- Cards Section -->
+    <!-- This section dynamically generates a grid of cards displaying video clips. Each card shows the video, a comment, and a timestamp. -->
 	<div class="container pt-3 pb-5">
 		<div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
 			{% for clip, timestamp, comment in clips %}
 			<div class="col">
 				<div class="card shadow">
+					<!-- Video Clip -->
 					<video controls>
 						<source src="{{ url_for('static', filename='clips/' ~ clip)}}" type="video/mp4">
 					</video>
+
+					<!-- Card Body -->
 					<div class="card-body">
+						<!-- Comment Section -->
 						<p class="card-text">{{ comment }}</p>
+
+						<!-- Action Buttons and Timestamp -->
 						<div class="d-flex justify-content-between align-items-center">
 							<a href="{{ url_for('delete_clip', clip_name=clip) }}" class="btn btn-sm btn-outline-primary">
 								<i class="bi bi-trash"></i>&nbspDelete
@@ -38,6 +50,9 @@
 			{% endfor %}
 		</div>
 	</div>
+
+	<!-- JavaScript for Delete Confirmation -->
+    <!-- This script prompts the user to confirm the deletion of all clips. -->
 	<script>
 		function confirmDeleteAll() {
 			if (confirm("Are you sure you want to delete all clips? This action cannot be undone.")) {

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block body %}
 	<!-- Title Board -->
+	<!-- This section creates a title banner with a "Live View" header -->
 	<div class="container-fluid py-5 text-center title-board">
 		<div class="row py-lg-5">
 		  	<div class="col-lg-6 col-md-8 mx-auto">
@@ -8,26 +9,41 @@
 			</div>
 		</div>
 	</div>
+
 	<!-- Camera Feed, buttons to control the camera and motion detection -->
 	<div class="container py-5">
 		<div class="col-lg-8 mx-auto text-center">
 			{% if camera_started %}
+				<!-- Video Feed Section -->
+				<!-- The image tag is used to display the video feed. A canvas overlay allows drawing exclusion zones. -->
 				<div class="position-relative pb-4">
 					<img id="frame" class="w-100 rounded" src="{{ url_for('video_feed') }}"/>
 					<canvas id="videoCanvas" class="w-100 rounded position-absolute top-0 start-0 border border-dark shadow"></canvas>
 				</div>
+
+				<!-- Instructions for drawing exclusion zones -->
 				<p>Draw on the video feed to create exclusion zones. These areas will be ignored by the motion detection.</p>
+
+				<!-- Control Buttons -->
+				<!-- Buttons to start motion detection and clear exclusion zones -->
                 <div class="d-flex justify-content-evenly pt-1 pb-2">
                     <button id="toggleMotionButton" class="btn btn-outline-primary">
 						<i class="bi bi-play-circle"></i>&nbspStart Motion Detection
                     </button>
 					<button id="clearButton" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i>&nbspClear All Exclusion Zones</button>
                 </div>
+
+				<!-- Horizontal Divider -->
 				<hr class="border-2 border-dark">
+
+				<!-- Camera Switch Instructions -->
 				<p>Enter a different IP address to switch cameras.</p>
 			{% else %}
+				<!-- Message when the camera is not connected -->
 				<p>Camera is not connected yet. Please enter the IP address of the camera below.</p>
 			{% endif %}
+
+			<!-- Camera Connection Form -->
 			<div class="row justify-content-center">
 				<div class="col-lg-8">
 					<form action="{{ url_for('start_camera') }}" method="post">
@@ -41,5 +57,7 @@
 			</div>			
 		</div>
 	</div>
+
+	<!-- JavaScript for handling the live view and canvas interactions -->
 	<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}
