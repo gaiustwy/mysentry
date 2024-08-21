@@ -3,7 +3,7 @@ import config
 from config import temp_folder_path
 from email_alert import EmailAlert
 from video_handler import VideoHandler
-from motion_detection import MotionDetector
+from motion_detector import MotionDetector
 
 # Initialize necessary classes
 email_alert = EmailAlert()
@@ -50,7 +50,7 @@ def generate_frames(video_capture):
                     MotionDetector.draw_rectangle(frame, contour, (0, 255, 0), 2)
                     
                     # Reset the counter whenever motion is detected
-                    no_motion_frame_count = 0 
+                    no_motion_frame_count = 0
 
                     if not recording:
                         print("Recording started")
@@ -65,9 +65,10 @@ def generate_frames(video_capture):
                 video_handler.write_frame(frame)
 
                 # Apply the motion mask to the frame and write to the masked video file
-                masked_frame = MotionDetector.apply_mask(frame, contour)
+                masked_frame = motion_detector.apply_mask(frame, contour)
                 video_handler_masked.write_frame(masked_frame)
 
+                # Count the number of frames while recording
                 frame_count += 1
                 
                 if not motion_detected:
@@ -87,9 +88,6 @@ def generate_frames(video_capture):
                     # Stop the video recordings
                     video_handler.stop_recording()
                     video_handler_masked.stop_recording()
-
-                    # Reset the frame counter
-                    frame_count = 0
                     
                     # Save a preview image from the video and masked video
                     video_handler.save_preview(motion_detected_frames)
@@ -108,6 +106,13 @@ def generate_frames(video_capture):
                         video_handler.preview_path, 
                         motion_detector.prediction_output_path
                     )
+
+                    # Clear the both list for the next motion detection event
+                    motion_detector.objects_detected.clear()
+                    motion_detected_frames.clear()
+
+                    # Reset the frame counter
+                    frame_count = 0
 
         # Encode the frame as JPEG to stream it to the client
         _, buffer = cv2.imencode('.jpg', frame)

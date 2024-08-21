@@ -68,7 +68,7 @@ class VideoHandler:
         index = len(total_frames) // 2
         middle_frame_number = total_frames[index]
         frame = self.get_frame_from_clip(middle_frame_number)
-
+        
         # Generate the preview path if not provided
         if preview_path is None:
             self.preview_path = f"{temp_folder_path}/preview.jpg"
