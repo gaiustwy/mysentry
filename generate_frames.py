@@ -64,16 +64,16 @@ def generate_frames(video_capture):
                 # Write the current frame to the video file
                 video_handler.write_frame(frame)
 
-                # Apply the motion mask to the frame and write to the masked video file
-                masked_frame = motion_detector.apply_mask(frame, contour)
-                video_handler_masked.write_frame(masked_frame)
-
                 # Count the number of frames while recording
                 frame_count += 1
                 
                 if not motion_detected:
                     no_motion_frame_count += 1
                 else:
+                    # Apply the motion mask to the frame and write to the masked video file
+                    masked_frame = motion_detector.apply_mask(frame, contour)
+                    video_handler_masked.write_frame(masked_frame)
+
                     # Track the frame where motion is detected
                     motion_detected_frames.append(frame_count)
 

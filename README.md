@@ -1,15 +1,14 @@
 # MySentry
 
-**MySentry** is an AI-driven video analytics surveillance system designed to offer affordable and privacy-focused security. Built with Flask, this application leverages OpenCV for motion detection and the YOLOv8 model for object recognition. MySentry processes live video streams, detects motion, identifies objects, and sends email alerts with detailed information and images. By using open-source tools and local storage, MySentry ensures that user data remains secure and private, with no need for additional hardware.
+**MySentry** is an AI-driven video analytics surveillance system designed to offer affordable and privacy-focused security. Built with Flask, this application leverages OpenCV for motion detection and the YOLOv8 model for object recognition. MySentry processes live video feeds, detects motion, identifies objects, and sends email alerts with detailed information and images. By using open-source tools and local storage, MySentry ensures that user data remains secure and private, with no need for buying additional hardware.
 
 ## Features
 
 - **Motion Detection**: Detects motion in real-time using OpenCV's background subtraction method.
-- **Object Recognition**: Identifies objects in the detected motion using the YOLOv8 model.
+- **Object Recognition**: Identifies objects in the motion detection events using the YOLOv8 model.
 - **Email Alerts**: Sends email notifications with detected object details and attached images.
-- **Video Recording**: Records video clips of detected motion and saves image previews and metadata.
 - **Exclusion Zones**: Configurable zones where motion detection is ignored.
-- **Web Dashboard**: A user-friendly interface for monitoring video feeds, managing clips, configuring settings, and viewing motion detection status.
+- **Web Dashboard**: A user-friendly interface for monitoring video feeds, managing clips, configuring settings, and playback motion detection clips.
 
 ## Installation
 
@@ -57,6 +56,6 @@ Follow these steps to set up the application:
    - Activate motion detection to begin monitoring.
 
 5. **Review Alerts and Clips**:
-   - Check your email for alerts and access recorded clips of detected motion as needed.
+   - Check your email for alerts and access recorded clips of motion detection as needed.
 
 
